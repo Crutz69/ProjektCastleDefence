@@ -4,6 +4,8 @@ A browser strategy game by Linus Virebrand. The first playable prototype was bui
 
 ## Play
 
+[Play in your browser](https://crutz69.github.io/ProjektCastleDefence/)
+
 Download `Spel.html` and open it in a modern desktop browser. The complete game, artwork and fonts are embedded. No installation, account or external service is required. Sound starts after interaction.
 
 ## Technical highlights
