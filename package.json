@@ -1,0 +1,11 @@
+{
+  "name": "castledefence-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CastleDefence / Emberfall: Factions portfolio demo by Linus Virebrand",
+  "scripts": {
+    "check": "node --check game.js && node --check strategy.js && node --check content.js && node --check build.cjs",
+    "test": "node qa/v5/mechanics-check.cjs && node qa/v5/strategy-check.cjs",
+    "build": "node build.cjs"
+  }
+}

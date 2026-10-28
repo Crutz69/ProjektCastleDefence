@@ -1,0 +1,14 @@
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const root=__dirname;
+let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const css=fs.readFileSync(path.join(root,'style.css'),'utf8').replace(/url\('assets\/([^']+\.woff2)'\)/g,(_,file)=>`url('data:font/woff2;base64,${fs.readFileSync(path.join(root,'assets',file)).toString('base64')}')`);
+const atlasSource=fs.readFileSync(path.join(root,'atlas-data.js'),'utf8');
+const atlas=JSON.parse(atlasSource.replace(/^\uFEFF/,'').replace('window.EmberfallAtlasData=','').replace(/;\s*$/,''));
+const context={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'content.js'),'utf8'),context);const content=context.window.EmberfallContent;if(content.units.length!==28||content.artIds.some(id=>!atlas[id]))throw new Error('Incomplete faction artwork');
+const imageFiles=[...new Set([...content.themeFiles,...content.artIds.map(id=>atlas[id].file)])];
+const embedded=Object.fromEntries(imageFiles.map(file=>[file,'data:image/webp;base64,'+fs.readFileSync(path.join(root,file)).toString('base64')]));
+html=html.replace('<link rel="stylesheet" href="style.css">',()=>`<style>${css}</style>`);
+for(const file of ['atlas-data.js','content.js','strategy.js','game.js'])html=html.replace(`<script src="${file}"></script>`,()=>`<script>${file==='atlas-data.js'?'window.EmberfallEmbeddedAssets='+JSON.stringify(embedded)+';\n':''}${fs.readFileSync(path.join(root,file),'utf8')}</script>`);
+html=html.replace('</head>',()=>`<!-- Font licenses:\n${fs.readFileSync(path.join(root,'assets','Cinzel-OFL.txt'),'utf8')}\n${fs.readFileSync(path.join(root,'assets','DM-Sans-OFL.txt'),'utf8')}\n-->\n</head>`);
+fs.writeFileSync(path.join(root,'Spel.html'),html);
+console.log('Emberfall: Factions built. '+(Buffer.byteLength(html)/1024/1024).toFixed(1)+' MB. '+imageFiles.length+' embedded images. Fully offline.');

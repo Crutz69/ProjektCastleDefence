@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10191b">
+  <title>Emberfall: Factions — Fyra världar i krig</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game" aria-label="Emberfall, ett borgförsvarsspel">
+    <canvas id="scene" aria-label="Slagfält. Sikta med musen, håll för att spänna bågen och släpp för att skjuta."></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#" id="brand" aria-label="Pausa spelet"><span class="crest">E</span><span>EMBERFALL<small>FACTIONS · FYRA VÄRLDAR</small></span></a>
+      <div class="wave-status"><span class="live-dot"></span><span id="wave-label">GRÄNSLANDET</span><span class="divider"></span><span id="wave-detail">Gryning över Norrmark</span></div>
+      <nav class="utilities" aria-label="Spelinställningar">
+        <button id="speed" class="icon-button speed-button" title="Spelhastighet. Kameran behåller samma fart." aria-label="Spelhastighet 1 gånger">1×</button>
+        <button id="codex" class="icon-button" title="Krigsboken — alla trupper och torn" aria-label="Öppna krigsboken">▤</button>
+        <button id="sound" class="icon-button" title="Ljud av/på (M)" aria-label="Slå på ljud" aria-pressed="false"></button>
+        <button id="pause" class="icon-button" title="Pausa (Esc)" aria-label="Pausa spelet"></button>
+        <button id="fullscreen" class="icon-button" title="Helskärm" aria-label="Växla helskärm"></button>
+      </nav>
+    </header>
+
+    <section class="resources" aria-label="Resurser">
+      <div class="resource fortress"><span class="resource-symbol" id="castle-icon"></span><div><div class="resource-caption"><span>FÄSTNING</span><b id="hp-number">1 000 / 1 000</b></div><div class="meter"><i id="hp-meter"></i></div></div></div>
+      <div class="resource mana"><span class="resource-symbol" id="mana-icon"></span><div><div class="resource-caption"><span>KRAFT</span><b id="mana-number">100 / 100</b></div><div class="meter"><i id="mana-meter"></i></div></div></div>
+      <div class="gold"><span id="coin-icon"></span><b id="gold-number">150</b><small>GULD</small></div>
+      <div class="income"><b id="income-number">+7/s</b><small>INKOMST</small></div>
+    </section>
+    <div class="enemy-fort"><span>FIENDENS FÄSTE</span><b id="enemy-hp-number">850 / 850</b><div class="meter"><i id="enemy-hp-meter"></i></div><small id="enemy-era">STENÅLDERN</small></div>
+
+    <nav class="battle-navigation" aria-label="Flytta kameran över slagfältet">
+      <button id="camera-home" title="Till din bas (Home)">DIN BAS</button>
+      <div class="map-wrap"><canvas id="battle-map" role="slider" tabindex="0" aria-label="Kameraposition på slagfältet. Klicka eller dra för att flytta." aria-valuemin="0" aria-valuemax="3200" aria-valuenow="0"></canvas><span>A / D · ← → · MUS VID SKÄRMKANTEN</span></div>
+      <button id="camera-front" title="Visa din främsta trupp (F)">FRONT</button>
+      <button id="camera-enemy" title="Till fiendens bas (End)">FIENDE</button>
+    </nav>
+    <div id="wave-banner" class="wave-banner" aria-live="polite"><small>HORISONTEN MÖRKNAR</small><h2>Våg I</h2><p>De första skuggorna</p></div>
+    <div id="toast" class="toast" role="status"></div>
+    <div id="combo" class="combo"><b>×1.0</b><span>TRÄFFSVIT</span></div>
+    <aside class="battle-director" aria-label="Stridsläge"><div><span id="difficulty-badge">VETERAN</span><b id="battle-phase">BYGG DIN FRONT</b><time id="battle-time">00:00</time></div><p id="enemy-intent">Spanarna söker fienden.</p><div class="director-progress"><i id="siege-progress"></i></div><small id="battle-objective">Skydda ditt fäste. Storma fiendens port.</small></aside>
+    <div class="tactical-actions"><button id="rally-button" title="Läker dina fälttrupper 12 % och ger 20 % snabbare anfall i 6 s. Kostar 40 kraft."><span>⚑</span><b>STRIDSHORN</b><small id="rally-status">40 KRAFT</small><kbd>R</kbd><i id="rally-cd"></i></button><button id="rain-button" title="Pilregn mot fiendens främsta förband. Kostar 60 kraft."><span>↧</span><b>PILREGN</b><small>60 KRAFT</small><kbd>SPACE</kbd><i id="rain-cd"></i></button></div>
+    <div id="context-tip" class="context-tip" role="status"><b id="tip-title"></b><span id="tip-copy"></span><button id="dismiss-tip" aria-label="Dölj tipset">×</button></div>
+
+    <div class="battle-info"><span class="tiny-rule"></span><span id="battle-caption">NORRMARK · ÅR 843</span><span class="tiny-rule"></span></div>
+    <footer id="command-hud" class="command-hud">
+      <div class="hero-command"><span class="section-label">DIN BÅGE</span><b id="hero-status">Väktaren · Nivå 1</b><span>SIKTA · HÅLL · SLÄPP</span><span class="hero-hint">R stärker armén<br>SPACE släpper pilregnet<br>V växlar spelhastighet</span></div>
+      <div class="army-command"><div class="command-tabs" role="tablist" aria-label="Befallningar"><button data-tab="troops" role="tab" aria-selected="true" class="active">TRUPPER <kbd>1–7</kbd></button><button data-tab="turrets" role="tab" aria-selected="false">TORN <kbd>T</kbd></button><button data-tab="army" role="tab" aria-selected="false">ARMÉ</button><button data-tab="forge" role="tab" aria-selected="false">SMEDJA</button><span id="remaining"></span></div><div id="command-cards" class="command-cards"></div><div class="training"><span id="training-text">Rekrytera en frontlinje och försvara den med din båge.</span><div id="training-queue"></div></div></div>
+      <div class="age-command"><span class="section-label">DIN BAS / TEMA</span><b id="age-name">Stenåldern</b><div class="age-progress"><i id="age-progress"></i></div><small id="age-xp">0 / 160 ERFARENHET</small><button id="evolve">UTVECKLAS <span id="evolve-cost">240 G</span></button></div>
+    </footer>
+
+    <section id="intro" class="overlay intro">
+      <div class="intro-content">
+        <div class="eyebrow"><span></span> FYRA VÄRLDAR. ETT SLAGFÄLT.</div>
+        <h1>EMBER<span>FALL</span></h1>
+        <div class="subtitle"><span></span> FACTIONS · BÅGEN OCH ARMÉN <span></span></div>
+        <p>Håll fronten. Vinn luften. Släpp fram kavalleriet.<br>Runor, pansar, cabaret och plasma möts i samma krig.</p>
+        <fieldset class="difficulty-picker"><legend>VÄLJ DIN MOTSTÅNDARE</legend><div id="difficulty-options"></div><p id="difficulty-description"></p></fieldset>
+        <button id="continue-campaign" class="continue-button hidden">FORTSÄTT KAMPANJEN <span id="continue-detail"></span></button>
+        <button class="primary" id="start" disabled><span id="start-label">LADDAR SLAGFÄLTET…</span><span class="button-arrow">⟶</span></button>
+        <button id="intro-codex" class="text-button">TRUPPER, FÖRMÅGOR OCH KONTRINGAR ⟶</button>
+        <div class="intro-controls"><span><i id="mouse-icon"></i> SIKTA · HÅLL · SLÄPP</span><span><kbd>1</kbd>–<kbd>7</kbd> REKRYTERA</span><span><kbd>A</kbd> / <kbd>D</kbd> · ← → FLYTTA KAMERAN</span></div>
+        <div class="intro-counts"><span><b>28</b> TRUPPSLAG</span><span><b>12</b> FÖRSVARSTORN</span><span><b>4</b> VÄRLDAR</span></div>
+        <div class="record" id="record"></div>
+      </div>
+      <div class="chapter"><span>FANTASY → MILITÄR → CABARET → SPACE</span><p>Varje trupp har en svaghet.</p><span class="chapter-line"></span></div>
+      <div class="version">EN SPELBAR SAGA <span>◆</span> EMBERFALL</div>
+    </section>
+
+    <section id="pause-screen" class="overlay hidden" aria-labelledby="pause-title">
+      <div class="panel compact"><div class="eyebrow" id="pause-difficulty">EN STUND AV STILLHET</div><h2 id="pause-title">Andas, väktare.</h2><p>Slaget väntar på dig. R stärker och läker armén. Space släpper pilregnet.</p><button id="resume" class="primary">TILLBAKA TILL SLAGET <span>⟶</span></button><button id="restart-pause" class="text-button">Spela om belägringen från dess början</button><button id="pause-menu" class="text-button">Huvudmeny · kampanjens kontrollpunkt sparas</button></div>
+    </section>
+
+    <section id="shop-screen" class="overlay hidden" aria-labelledby="shop-title">
+      <div class="panel shop-panel"><div class="eyebrow" id="shop-eyebrow">GRYNINGEN TILLHÖR DIG</div><h2 id="shop-title">Fästet är ditt.</h2><p id="shop-summary"></p><div id="siege-results" class="siege-results"></div><div class="next-intel"><small>NÄSTA BELÄGRING · SPANINGSRAPPORT</small><b id="next-plan-name"></b><p id="next-plan-description"></p></div><div class="doctrine-heading">DIN FÄLTORDER <span>GÄLLER NÄSTA BELÄGRING</span></div><div id="doctrine-options" class="doctrine-options"></div><div class="shop-balance"><span>RUSTKAMMAREN</span><b id="shop-gold">150 GULD</b></div><div id="upgrades" class="upgrade-grid"></div><button id="shop-evolve" class="secondary">UTVECKLA TILL NÄSTA TIDSÅLDER</button><button id="next-wave" class="primary">MÖT NÄSTA BELÄGRING <span>⟶</span></button></div>
+    </section>
+
+    <section id="end-screen" class="overlay hidden" aria-labelledby="end-title"><div class="panel compact"><div class="eyebrow" id="end-eyebrow">VÄKTARENS SISTA PIL</div><h2 id="end-title">Norrmark föll.</h2><p id="end-copy"></p><div id="end-stats" class="end-stats"></div><button id="restart" class="primary">SPELA IGEN <span>⟶</span></button><button id="end-menu" class="text-button">Välj svårighetsgrad i huvudmenyn</button></div></section>
+    <section id="codex-screen" class="overlay hidden" aria-labelledby="codex-title"><div class="panel codex-panel"><button class="close-button" id="close-codex" aria-label="Stäng krigsboken">×</button><div class="eyebrow">TRUPPER · FÖRMÅGOR · KONTRINGAR</div><h2 id="codex-title">Krigsboken</h2><div id="codex-ages" class="codex-ages"></div><div class="tactics-legend">TANK stoppar stormtrupp · SPJUT stoppar kavalleri · SKYTT stoppar flygare · FLYGARE går över fronten</div><div class="animation-tabs"><button data-animation="walk" class="active">MARSCH / FLYG</button><button data-animation="attack">ANFALL</button><button data-animation="death">FALLEN</button><button data-animation="ability">FÖRMÅGA</button></div><div id="codex-units" class="codex-units"></div><div id="codex-turrets" class="codex-turrets"></div></div></section>
+    <div class="rotate-hint">Vrid gärna skärmen för ett större slagfält.</div>
+  </main>
+  <script src="atlas-data.js"></script>
+  <script src="content.js"></script>
+  <script src="strategy.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
